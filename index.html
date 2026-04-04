@@ -1178,63 +1178,49 @@ footer{padding:28px 192px;border-top:1px solid var(--bo);display:flex;align-item
   </div>
   <!-- Final Output Link Panel -->
   <div id="cs3-link-panel" style="margin-top:28px;background:var(--bg3);border:1px solid var(--bo);padding:28px 32px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:18px;">
-      <div>
-        <div class="lbl" style="margin-bottom:4px;">Final Output Link</div>
-        <p style="font-size:12.5px;color:var(--mu);max-width:480px;">Add the live link to the final deliverable &mdash; the editable public website or Looker Studio dashboard &mdash; so viewers can access the actual output.</p>
-      </div>
-      <div id="cs3-link-display" style="display:none;">
-        <a id="cs3-link-anchor" href="#" target="_blank" class="btn" style="font-size:10px;padding:10px 22px;">View Final Output &#8599;</a>
-      </div>
-    </div>
-    <div style="display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;">
-      <input
-        type="url"
-        id="cs3-link-input"
-        placeholder="https://lookerstudio.google.com/your-report-link"
+    <div class="lbl" style="margin-bottom:6px;">Final Output Link</div>
+    <p style="font-size:12.5px;color:var(--mu);margin-bottom:18px;max-width:520px;">Paste the live link to the final deliverable. Once saved, the button becomes a direct link that opens in a new tab.</p>
+    <div id="cs3-input-row" style="display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;">
+      <input type="url" id="cs3-link-input" placeholder="https://your-link-here.com"
         style="flex:1;min-width:260px;background:var(--bg);border:1px solid var(--bo);color:var(--w);padding:12px 16px;font-family:var(--B);font-size:13px;outline:none;transition:border-color .2s;border-radius:0;"
-        oninput="cs3ValidateLink()"
-        onfocus="this.style.borderColor='var(--ac)'"
-        onblur="this.style.borderColor='var(--bo)'"
-      >
-      <button
-        onclick="cs3SaveLink()"
-        class="btn"
-        id="cs3-save-btn"
-        style="padding:12px 26px;font-size:11px;cursor:pointer;border:none;opacity:0.45;transition:opacity .2s;"
-        disabled
-      >Save Link</button>
-      <button
-        onclick="cs3ClearLink()"
-        style="padding:12px 16px;background:none;border:1px solid var(--bo);color:var(--mu);font-size:11px;cursor:pointer;font-family:var(--B);transition:all .2s;"
-        onmouseover="this.style.borderColor='var(--ac)';this.style.color='var(--w)'"
-        onmouseout="this.style.borderColor='var(--bo)';this.style.color='var(--mu)'"
-      >Clear</button>
+        onfocus="this.style.borderColor='var(--ac)'" onblur="this.style.borderColor='var(--bo)'">
+      <button id="cs3-save-btn" onclick="cs3SaveLink()" class="btn"
+        style="padding:12px 26px;font-size:11px;cursor:pointer;border:none;">Save Link</button>
     </div>
-    <div id="cs3-link-status" style="margin-top:10px;font-size:11.5px;color:var(--mu);min-height:18px;letter-spacing:.02em;"></div>
+    <div id="cs3-goto-row" style="display:none;gap:10px;align-items:center;flex-wrap:wrap;">
+      <a id="cs3-link-anchor" href="#" target="_blank" class="btn"
+        style="font-size:11px;padding:12px 26px;text-decoration:none;">Go to Link &#8599;</a>
+      <button onclick="cs3ClearLink()"
+        style="padding:12px 18px;background:none;border:1px solid var(--bo);color:var(--mu);font-size:11px;cursor:pointer;font-family:var(--B);transition:all .2s;"
+        onmouseover="this.style.borderColor='var(--ac)';this.style.color='var(--w)'"
+        onmouseout="this.style.borderColor='var(--bo)';this.style.color='var(--mu)'">Change Link</button>
+      <span id="cs3-saved-url" style="font-size:11px;color:var(--mu);word-break:break-all;"></span>
+    </div>
+    <div id="cs3-link-status" style="margin-top:10px;font-size:11.5px;min-height:18px;letter-spacing:.02em;"></div>
   </div>
+
+  </div>
+
 
   <div class="rule"></div>
   <div class="lbl">Case Study &middot; 04</div>
   <h2 class="h2">ToothBootZ &mdash;<br>Anniversary <span class="r">Poster</span></h2>
   <div class="csgrid">
     <div>
-      <p class="bt" style="margin-bottom:20px;">ToothBootz Dental Clinic needed a high-impact anniversary poster to celebrate their milestone and strengthen their presence on social media. The brief called for warm, trustworthy healthcare aesthetics delivered under a tight 5-day deadline.</p>
-      <p class="bt">Through a structured creative workflow &mdash; from brainstorm through stakeholder alignment to final delivery &mdash; four polished poster variants were delivered on Day 4, a full day ahead of schedule.</p>
+      <p class="bt" style="margin-bottom:20px;">ToothBootz Dental Clinic needed a high-impact anniversary poster to celebrate their milestone and strengthen their brand presence on social media. The brief called for warm, trustworthy healthcare aesthetics delivered under a tight 5-day deadline.</p>
+      <p class="bt">Through a structured creative workflow from brainstorm through stakeholder alignment to final delivery, four polished poster variants were delivered on Day 4 &mdash; a full day ahead of schedule.</p>
     </div>
     <div style="display:flex;flex-direction:column;gap:2px;">
       <div class="cspan"><h3>The Challenge</h3><p>Deliver a high-quality anniversary campaign poster for a healthcare brand with specific tone requirements and a firm 5-day turnaround.</p></div>
       <div class="cspan"><h3>The Result</h3><p>4 final poster variants delivered on Day 4 &mdash; 1 day ahead of deadline. 5&#9733; client feedback with zero revision cycles after final delivery.</p></div>
     </div>
   </div>
-  <!-- Embedded Case Study Visual Flow -->
   <div style="margin:36px 0 0;border:1px solid var(--bo);border-radius:2px;overflow:hidden;background:#07070E;">
     <div style="padding:14px 22px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.03);">
       <span style="font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ac);font-weight:600;">Case Study Flow</span>
       <span style="font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:.06em;">ToothBootZ Anniversary Offer Poster</span>
     </div>
-    <iframe
-      srcdoc="<!DOCTYPE html>
+    <iframe srcdoc="<!DOCTYPE html>
 <html>
 <head>
 <style>
@@ -1767,11 +1753,9 @@ footer{padding:28px 192px;border-top:1px solid var(--bo);display:flex;align-item
 </body>
 </html>
 "
-      style="width:100%;min-height:680px;border:none;display:block;"
-      scrolling="no"
+      style="width:100%;min-height:680px;border:none;display:block;" scrolling="no"
       title="ToothBootZ Anniversary Poster Case Study"
-      onload="this.style.minHeight=(this.contentDocument.body.scrollHeight+40)+'px'"
-    ></iframe>
+      onload="this.style.minHeight=(this.contentDocument.body.scrollHeight+40)+'px'"></iframe>
   </div>
 
 </section>
@@ -1910,68 +1894,63 @@ footer{padding:28px 192px;border-top:1px solid var(--bo);display:flex;align-item
   <div class="fr">Yadhav Krishna NV &middot; Digital Marketing &amp; Graphic Design<br>Bengaluru, India &middot; (+91) 9791526872<br>&copy; 2025 &mdash; All rights reserved</div>
 </footer>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js">
+<script>
 /* CS3 LINK PANEL */
-function cs3ValidateLink() {
-  var inp = document.getElementById('cs3-link-input');
-  var btn = document.getElementById('cs3-save-btn');
-  var v = inp ? inp.value.trim() : '';
-  if (btn) { btn.disabled = !v; btn.style.opacity = v ? '1' : '0.45'; }
+function cs3ShowSavedState(url) {
+  var inputRow  = document.getElementById('cs3-input-row');
+  var gotoRow   = document.getElementById('cs3-goto-row');
+  var anchor    = document.getElementById('cs3-link-anchor');
+  var savedSpan = document.getElementById('cs3-saved-url');
+  var status    = document.getElementById('cs3-link-status');
+  if (inputRow)  inputRow.style.display  = 'none';
+  if (gotoRow)   gotoRow.style.display   = 'flex';
+  if (anchor)    anchor.href             = url;
+  if (savedSpan) savedSpan.textContent   = url;
+  if (status)  { status.innerHTML = '&#10003; Saved.'; status.style.color = '#22c55e'; }
+}
+function cs3ShowInputState() {
+  var inputRow = document.getElementById('cs3-input-row');
+  var gotoRow  = document.getElementById('cs3-goto-row');
+  var status   = document.getElementById('cs3-link-status');
+  if (inputRow) inputRow.style.display = 'flex';
+  if (gotoRow)  gotoRow.style.display  = 'none';
+  if (status)   status.textContent     = '';
 }
 function cs3SaveLink() {
-  var inp = document.getElementById('cs3-link-input');
+  var inp    = document.getElementById('cs3-link-input');
   var status = document.getElementById('cs3-link-status');
-  var display = document.getElementById('cs3-link-display');
-  var anchor = document.getElementById('cs3-link-anchor');
   if (!inp) return;
   var url = inp.value.trim();
-  if (!url) return;
-  try { new URL(url); } catch(e) {
-    if (status) { status.textContent = 'Please enter a valid URL (include https://)'; status.style.color = 'var(--ac)'; }
+  if (!url) {
+    if (status) { status.textContent = 'Please paste a URL first.'; status.style.color = 'var(--ac)'; }
     return;
   }
-  if (anchor) anchor.href = url;
-  if (display) display.style.display = 'block';
-  if (status) { status.textContent = '&#10003; Link saved — button above is now live.'; status.style.color = '#22c55e'; status.innerHTML = '&#10003; Link saved &mdash; button above is now live.'; }
+  if (url.indexOf('http://') !== 0 && url.indexOf('https://') !== 0) {
+    url = 'https://' + url;
+  }
+  inp.value = url;
   try { localStorage.setItem('cs3_output_link', url); } catch(e) {}
+  cs3ShowSavedState(url);
 }
 function cs3ClearLink() {
   var inp = document.getElementById('cs3-link-input');
-  var status = document.getElementById('cs3-link-status');
-  var display = document.getElementById('cs3-link-display');
-  var btn = document.getElementById('cs3-save-btn');
   if (inp) inp.value = '';
-  if (display) display.style.display = 'none';
-  if (status) status.textContent = '';
-  if (btn) { btn.disabled = true; btn.style.opacity = '0.45'; }
   try { localStorage.removeItem('cs3_output_link'); } catch(e) {}
+  cs3ShowInputState();
 }
-/* Restore saved link on load */
-window.addEventListener('load', function() {
-  try {
-    var saved = localStorage.getItem('cs3_output_link');
-    if (saved) {
-      var inp = document.getElementById('cs3-link-input');
-      var anchor = document.getElementById('cs3-link-anchor');
-      var display = document.getElementById('cs3-link-display');
-      var status = document.getElementById('cs3-link-status');
-      if (inp) inp.value = saved;
-      if (anchor) anchor.href = saved;
-      if (display) display.style.display = 'block';
-      if (status) { status.innerHTML = '&#10003; Link saved &mdash; button above is now live.'; status.style.color = '#22c55e'; }
-      cs3ValidateLink();
-    }
-  } catch(e) {}
-});
 
-</script><script>
-/* SKILL BARS on load */
+/* SKILL BARS */
 window.addEventListener('load', function() {
   setTimeout(function() {
     document.querySelectorAll('.sbf').forEach(function(f, i) {
       setTimeout(function() { f.style.width = f.dataset.w + '%'; }, 300 + i * 80);
     });
   }, 400);
+  /* Restore CS3 saved link */
+  try {
+    var cs3saved = localStorage.getItem('cs3_output_link');
+    if (cs3saved) { cs3ShowSavedState(cs3saved); }
+  } catch(e) {}
 });
 
 /* NAV DOTS */
@@ -2035,7 +2014,11 @@ function processFiles(files, cat) {
       var frm = document.createElement('button'); frm.className = 'fdrm'; frm.textContent = '✕'; frm.title = 'Remove';
       frm.addEventListener('click', function() { d.remove(); });
       d.appendChild(ic); d.appendChild(fnm); d.appendChild(frm);
-      if (isPDF) { var purl = URL.createObjectURL(file); d.style.cursor = 'pointer'; d.addEventListener('click', function(ev) { if (ev.target !== frm) window.open(purl, '_blank'); }); }
+      if (isPDF) {
+        var purl = URL.createObjectURL(file);
+        d.style.cursor = 'pointer';
+        d.addEventListener('click', function(ev) { if (ev.target !== frm) window.open(purl, '_blank'); });
+      }
       grid.appendChild(d);
     }
   });
@@ -2046,4 +2029,16 @@ function openLB(src, isVid) {
   ct.innerHTML = '';
   var el = document.createElement(isVid ? 'video' : 'img');
   el.src = src; if (isVid) { el.controls = true; el.autoplay = true; }
-  ct.appendChild(el);
+  ct.appendChild(el); lb.classList.add('on');
+}
+function closeLB() {
+  document.getElementById('lb').classList.remove('on');
+  document.getElementById('lbc').innerHTML = '';
+}
+document.getElementById('lb').addEventListener('click', function(e) {
+  if (e.target === document.getElementById('lb')) closeLB();
+});
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeLB(); });
+</script>
+</body>
+</html>
