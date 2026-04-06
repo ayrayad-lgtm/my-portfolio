@@ -1895,7 +1895,293 @@ footer{padding:28px 192px;border-top:1px solid var(--bo);display:flex;align-item
 </footer>
 
 <script>
-/* CS3 LINK PANEL */
+/* ═══════════════════════════════════════════════════════════════
+   INDEXEDDB  —  auto-save every uploaded file as a binary blob
+   Files survive page refresh, browser restart, cache clears.
+═══════════════════════════════════════════════════════════════ */
+var IDB_NAME    = 'yk_portfolio_v3';
+var IDB_VER     = 1;
+var IDB_STORE   = 'files';
+var _db         = null;
+
+function idbOpen(cb) {
+  if (_db) { cb(_db); return; }
+  var req = indexedDB.open(IDB_NAME, IDB_VER);
+  req.onupgradeneeded = function(e) {
+    e.target.result.createObjectStore(IDB_STORE);
+  };
+  req.onsuccess = function(e) { _db = e.target.result; cb(_db); };
+  req.onerror   = function()  { cb(null); };
+}
+
+function idbPut(key, val, cb) {
+  idbOpen(function(db) {
+    if (!db) { if (cb) cb(false); return; }
+    var tx = db.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).put(val, key);
+    tx.oncomplete = function() { if (cb) cb(true);  };
+    tx.onerror    = function() { if (cb) cb(false); };
+  });
+}
+
+function idbGet(key, cb) {
+  idbOpen(function(db) {
+    if (!db) { cb(null); return; }
+    var tx  = db.transaction(IDB_STORE, 'readonly');
+    var req = tx.objectStore(IDB_STORE).get(key);
+    req.onsuccess = function() { cb(req.result !== undefined ? req.result : null); };
+    req.onerror   = function() { cb(null); };
+  });
+}
+
+function idbDel(key, cb) {
+  idbOpen(function(db) {
+    if (!db) { if (cb) cb(); return; }
+    var tx = db.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).delete(key);
+    tx.oncomplete = function() { if (cb) cb(); };
+    tx.onerror    = function() { if (cb) cb(); };
+  });
+}
+
+function idbAllKeys(cb) {
+  idbOpen(function(db) {
+    if (!db) { cb([]); return; }
+    var tx  = db.transaction(IDB_STORE, 'readonly');
+    var req = tx.objectStore(IDB_STORE).getAllKeys();
+    req.onsuccess = function() { cb(req.result || []); };
+    req.onerror   = function() { cb([]); };
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TOAST  —  small non-blocking "Auto-saved" notification
+═══════════════════════════════════════════════════════════════ */
+function showToast(msg, color) {
+  var t = document.getElementById('yk-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'yk-toast';
+    t.style.cssText = [
+      'position:fixed;bottom:28px;right:28px;z-index:9999',
+      'padding:10px 20px;font-size:12px;letter-spacing:.06em',
+      'font-family:var(--B);border-radius:2px',
+      'transition:opacity .4s ease,transform .4s ease',
+      'pointer-events:none;opacity:0;transform:translateY(10px)'
+    ].join(';');
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.background  = color || '#22c55e';
+  t.style.color       = '#fff';
+  t.style.opacity     = '1';
+  t.style.transform   = 'translateY(0)';
+  clearTimeout(t._tid);
+  t._tid = setTimeout(function() {
+    t.style.opacity   = '0';
+    t.style.transform = 'translateY(10px)';
+  }, 2200);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDER  —  build the file card and append to the right grid
+═══════════════════════════════════════════════════════════════ */
+function renderCard(cat, name, type, blobUrl, dbKey) {
+  var grid = document.getElementById('fg-' + cat);
+  if (!grid) return;
+
+  var isVid = type.startsWith('video/');
+  var isImg = type.startsWith('image/');
+  var isPDF = type === 'application/pdf' || name.toLowerCase().endsWith('.pdf');
+  var isDoc = name.toLowerCase().endsWith('.doc') || name.toLowerCase().endsWith('.docx');
+
+  if (isImg || isVid) {
+    /* ── thumbnail card ── */
+    var th  = document.createElement('div');
+    th.className     = 'fthumb';
+    th.dataset.dbkey = dbKey || '';
+    th.style.cssText = 'cursor:pointer;';
+
+    var med = document.createElement(isVid ? 'video' : 'img');
+    med.src = blobUrl;
+    if (isVid) { med.muted = true; med.preload = 'metadata'; }
+    th.appendChild(med);
+
+    var nm = document.createElement('div');
+    nm.className   = 'ftnm';
+    nm.textContent = name;
+    th.appendChild(nm);
+
+    /* hover overlay: Preview + Remove */
+    var ov   = document.createElement('div');
+    ov.className = 'ftov';
+
+    var prev = document.createElement('button');
+    prev.className   = 'ftrm';
+    prev.textContent = 'Preview';
+    prev.style.cssText = 'background:var(--bg2);margin-right:6px;';
+    prev.addEventListener('click', function(ev) {
+      ev.stopPropagation();
+      openLB(blobUrl, isVid, name);
+    });
+
+    var rm = document.createElement('button');
+    rm.className   = 'ftrm';
+    rm.textContent = 'Remove';
+    rm.style.cssText = 'background:var(--ac);';
+    rm.addEventListener('click', function(ev) {
+      ev.stopPropagation();
+      if (dbKey) idbDel(dbKey, null);
+      th.remove();
+      showToast('File removed', '#d0021b');
+    });
+
+    ov.appendChild(prev);
+    ov.appendChild(rm);
+    th.appendChild(ov);
+
+    th.addEventListener('click', function() { openLB(blobUrl, isVid, name); });
+    grid.appendChild(th);
+
+  } else if (isPDF || isDoc) {
+    /* ── document row ── */
+    var row  = document.createElement('div');
+    row.className     = 'fdoc';
+    row.dataset.dbkey = dbKey || '';
+
+    var ic  = document.createElement('div');
+    ic.className   = 'fdico';
+    ic.textContent = isPDF ? '📄' : '📝';
+
+    var fnm = document.createElement('div');
+    fnm.className   = 'fdnm';
+    fnm.textContent = name;
+
+    /* Preview button (open in new tab) */
+    var fprev = document.createElement('button');
+    fprev.className   = 'fdrm';
+    fprev.title       = 'Preview';
+    fprev.textContent = '👁';
+    fprev.style.fontSize = '15px';
+    fprev.addEventListener('click', function(ev) {
+      ev.stopPropagation();
+      window.open(blobUrl, '_blank');
+    });
+
+    var frm = document.createElement('button');
+    frm.className   = 'fdrm';
+    frm.textContent = '✕';
+    frm.title       = 'Remove';
+    frm.addEventListener('click', function(ev) {
+      ev.stopPropagation();
+      if (dbKey) idbDel(dbKey, null);
+      row.remove();
+      showToast('File removed', '#d0021b');
+    });
+
+    row.appendChild(ic);
+    row.appendChild(fnm);
+    row.appendChild(fprev);
+    row.appendChild(frm);
+    row.style.cursor = 'pointer';
+    row.addEventListener('click', function(ev) {
+      if (ev.target !== frm && ev.target !== fprev) window.open(blobUrl, '_blank');
+    });
+    grid.appendChild(row);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SAVE + RENDER  —  called when user picks a file
+═══════════════════════════════════════════════════════════════ */
+function saveAndRender(file, cat) {
+  var isVid = file.type.startsWith('video/');
+  var isImg = file.type.startsWith('image/');
+  var isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+  var isDoc = file.name.toLowerCase().endsWith('.doc') || file.name.toLowerCase().endsWith('.docx');
+  if (!isVid && !isImg && !isPDF && !isDoc) return;
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var record = {
+      cat:  cat,
+      name: file.name,
+      type: file.type || 'application/octet-stream',
+      buf:  e.target.result    /* ArrayBuffer — survives restarts */
+    };
+    var dbKey = cat + '::' + Date.now() + '::' + file.name;
+    idbPut(dbKey, record, function(ok) {
+      if (ok) showToast('✓ Auto-saved: ' + file.name);
+      else    showToast('Saved in session only (storage full?)', '#e67e22');
+    });
+    var blob    = new Blob([e.target.result], { type: record.type });
+    var blobUrl = URL.createObjectURL(blob);
+    renderCard(cat, file.name, record.type, blobUrl, dbKey);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESTORE  —  on page load, rebuild all cards from IndexedDB
+═══════════════════════════════════════════════════════════════ */
+function restoreAllFiles() {
+  idbAllKeys(function(keys) {
+    var fileKeys = keys.filter(function(k) { return k.indexOf('::') !== -1; });
+    if (!fileKeys.length) return;
+    fileKeys.forEach(function(key) {
+      idbGet(key, function(record) {
+        if (!record || !record.buf) return;
+        var blob    = new Blob([record.buf], { type: record.type });
+        var blobUrl = URL.createObjectURL(blob);
+        renderCard(record.cat, record.name, record.type, blobUrl, key);
+      });
+    });
+  });
+}
+
+/* ── public entry points ── */
+function handleF(inp, cat) {
+  if (!inp.files || !inp.files.length) return;
+  Array.from(inp.files).forEach(function(f) { saveAndRender(f, cat); });
+}
+
+function processFiles(files, cat) {
+  if (!files || !files.length) return;
+  Array.from(files).forEach(function(f) { saveAndRender(f, cat); });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LIGHTBOX  —  fullscreen preview with filename caption
+═══════════════════════════════════════════════════════════════ */
+function openLB(src, isVid, filename) {
+  var lb = document.getElementById('lb');
+  var ct = document.getElementById('lbc');
+  ct.innerHTML = '';
+  var el = document.createElement(isVid ? 'video' : 'img');
+  el.src = src;
+  if (isVid) { el.controls = true; el.autoplay = true; }
+  el.style.cssText = 'max-width:100%;max-height:82vh;object-fit:contain;display:block;border:1px solid var(--bo);';
+  ct.appendChild(el);
+  if (filename) {
+    var cap = document.createElement('div');
+    cap.textContent = filename;
+    cap.style.cssText = 'margin-top:12px;font-size:12px;color:rgba(255,255,255,.45);text-align:center;letter-spacing:.04em;';
+    ct.appendChild(cap);
+  }
+  lb.classList.add('on');
+}
+function closeLB() {
+  document.getElementById('lb').classList.remove('on');
+  document.getElementById('lbc').innerHTML = '';
+}
+document.getElementById('lb').addEventListener('click', function(e) {
+  if (e.target === document.getElementById('lb')) closeLB();
+});
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeLB(); });
+
+/* ═══════════════════════════════════════════════════════════════
+   CS3 LINK PANEL
+═══════════════════════════════════════════════════════════════ */
 function cs3ShowSavedState(url) {
   var inputRow  = document.getElementById('cs3-input-row');
   var gotoRow   = document.getElementById('cs3-goto-row');
@@ -1939,21 +2225,30 @@ function cs3ClearLink() {
   cs3ShowInputState();
 }
 
-/* SKILL BARS */
+/* ═══════════════════════════════════════════════════════════════
+   PAGE LOAD
+═══════════════════════════════════════════════════════════════ */
 window.addEventListener('load', function() {
+  /* Skill bars */
   setTimeout(function() {
     document.querySelectorAll('.sbf').forEach(function(f, i) {
       setTimeout(function() { f.style.width = f.dataset.w + '%'; }, 300 + i * 80);
     });
   }, 400);
-  /* Restore CS3 saved link */
+
+  /* Restore CS3 link */
   try {
     var cs3saved = localStorage.getItem('cs3_output_link');
-    if (cs3saved) { cs3ShowSavedState(cs3saved); }
+    if (cs3saved) cs3ShowSavedState(cs3saved);
   } catch(e) {}
+
+  /* Restore all uploaded files from IndexedDB */
+  restoreAllFiles();
 });
 
-/* NAV DOTS */
+/* ═══════════════════════════════════════════════════════════════
+   NAV DOTS
+═══════════════════════════════════════════════════════════════ */
 var SECS = ['hero','about','skills','knowledge','experience','work','casestudies','cs-upload','creatives','content','video','websites','perf','contact'];
 var dots = document.querySelectorAll('.dot');
 dots.forEach(function(d) {
@@ -1973,72 +2268,27 @@ var dio = new IntersectionObserver(function(entries) {
 }, { threshold: 0.35 });
 SECS.forEach(function(id) { var el = document.getElementById(id); if (el) dio.observe(el); });
 
-/* DRAG & DROP */
+/* ═══════════════════════════════════════════════════════════════
+   DRAG & DROP  (static zones)
+═══════════════════════════════════════════════════════════════ */
 document.querySelectorAll('.uzone').forEach(function(z) {
-  z.addEventListener('dragover', function(e) { e.preventDefault(); z.style.borderColor = 'var(--ac)'; z.style.background = 'var(--acs)'; });
-  z.addEventListener('dragleave', function() { z.style.borderColor = ''; z.style.background = ''; });
+  z.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    z.style.borderColor = 'var(--ac)';
+    z.style.background  = 'var(--acs)';
+  });
+  z.addEventListener('dragleave', function() {
+    z.style.borderColor = '';
+    z.style.background  = '';
+  });
   z.addEventListener('drop', function(e) {
-    e.preventDefault(); z.style.borderColor = ''; z.style.background = '';
+    e.preventDefault();
+    z.style.borderColor = '';
+    z.style.background  = '';
     var id = z.id.replace('zn-', '');
     processFiles(e.dataTransfer.files, id);
   });
 });
-
-function handleF(inp, cat) { processFiles(inp.files, cat); }
-
-function processFiles(files, cat) {
-  var grid = document.getElementById('fg-' + cat);
-  if (!grid || !files || !files.length) return;
-  Array.from(files).forEach(function(file) {
-    var isVid = file.type.startsWith('video/');
-    var isImg = file.type.startsWith('image/');
-    var isPDF = file.type === 'application/pdf' || file.name.endsWith('.pdf');
-    var isDoc = file.name.endsWith('.doc') || file.name.endsWith('.docx');
-    if (isImg || isVid) {
-      var th = document.createElement('div'); th.className = 'fthumb';
-      var url = URL.createObjectURL(file);
-      var med = document.createElement(isVid ? 'video' : 'img');
-      med.src = url; if (isVid) { med.muted = true; }
-      th.appendChild(med);
-      var nm = document.createElement('div'); nm.className = 'ftnm'; nm.textContent = file.name; th.appendChild(nm);
-      var ov = document.createElement('div'); ov.className = 'ftov';
-      var rm = document.createElement('button'); rm.className = 'ftrm'; rm.textContent = 'Remove';
-      rm.addEventListener('click', function(ev) { ev.stopPropagation(); th.remove(); });
-      ov.appendChild(rm); th.appendChild(ov);
-      th.addEventListener('click', function(ev) { if (!rm.contains(ev.target)) openLB(url, isVid); });
-      grid.appendChild(th);
-    } else if (isPDF || isDoc) {
-      var d = document.createElement('div'); d.className = 'fdoc';
-      var ic = document.createElement('div'); ic.className = 'fdico'; ic.textContent = isPDF ? '📄' : '📝';
-      var fnm = document.createElement('div'); fnm.className = 'fdnm'; fnm.textContent = file.name;
-      var frm = document.createElement('button'); frm.className = 'fdrm'; frm.textContent = '✕'; frm.title = 'Remove';
-      frm.addEventListener('click', function() { d.remove(); });
-      d.appendChild(ic); d.appendChild(fnm); d.appendChild(frm);
-      if (isPDF) {
-        var purl = URL.createObjectURL(file);
-        d.style.cursor = 'pointer';
-        d.addEventListener('click', function(ev) { if (ev.target !== frm) window.open(purl, '_blank'); });
-      }
-      grid.appendChild(d);
-    }
-  });
-}
-
-function openLB(src, isVid) {
-  var lb = document.getElementById('lb'), ct = document.getElementById('lbc');
-  ct.innerHTML = '';
-  var el = document.createElement(isVid ? 'video' : 'img');
-  el.src = src; if (isVid) { el.controls = true; el.autoplay = true; }
-  ct.appendChild(el); lb.classList.add('on');
-}
-function closeLB() {
-  document.getElementById('lb').classList.remove('on');
-  document.getElementById('lbc').innerHTML = '';
-}
-document.getElementById('lb').addEventListener('click', function(e) {
-  if (e.target === document.getElementById('lb')) closeLB();
-});
-document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeLB(); });
 </script>
 </body>
 </html>
