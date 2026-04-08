@@ -1885,68 +1885,129 @@ footer{padding:28px 192px;border-top:1px solid var(--bo);display:flex;align-item
 </footer>
 
 <script>
-/* ═══════════════════════════════════════════════════════════════
-   INDEXEDDB  —  auto-save every uploaded file as a binary blob
-   Files survive page refresh, browser restart, cache clears.
-═══════════════════════════════════════════════════════════════ */
-var IDB_NAME    = 'yk_portfolio_v3';
-var IDB_VER     = 1;
-var IDB_STORE   = 'files';
-var _db         = null;
+/* ═══════════════════════════════════════════════════════════════════════
+   SUPABASE CONFIG
+   
+   SETUP (one-time, 3 minutes):
+   1. Go to https://supabase.com  →  New project (free)
+   2. In your project → Storage → Create bucket called: portfolio-files
+      Set it to PUBLIC
+   3. In Table Editor → New table called: portfolio_links
+      Columns: id (int8, primary key), cat (text), name (text), url (text)
+      Set Row Level Security OFF (or allow all for anon)
+   4. Go to Settings → API → copy "URL" and "anon public" key below
+   5. Re-upload this HTML file to Netlify
+═══════════════════════════════════════════════════════════════════════ */
+var SB_URL    = 'https://bbaldktkbstsyhytyywa.supabase.co';       
+var SB_KEY    = 'sb_publishable_USV9UlbOhIahSDVnRYb_gA_8AxoEnMr';  // starts with eyJ...
+var SB_BUCKET = 'portfolio-files';
+var SB_TABLE  = 'portfolio_links';
+var SB_READY  = SB_URL !== 'YOUR_SUPABASE_URL' && SB_KEY !== 'YOUR_SUPABASE_ANON_KEY';
 
-function idbOpen(cb) {
-  if (_db) { cb(_db); return; }
-  var req = indexedDB.open(IDB_NAME, IDB_VER);
-  req.onupgradeneeded = function(e) {
-    e.target.result.createObjectStore(IDB_STORE);
+/* ── Setup banner ─────────────────────────────────────────────────────── */
+window.addEventListener('DOMContentLoaded', function() {
+  if (!SB_READY) {
+    var banner = document.createElement('div');
+    banner.id = 'sb-setup-banner';
+    banner.style.cssText = [
+      'position:fixed;top:58px;left:0;right:0;z-index:500',
+      'background:#d0021b;color:#fff;padding:12px 24px',
+      'display:flex;align-items:center;justify-content:space-between;gap:16px',
+      'font-family:var(--B);font-size:12px;letter-spacing:.04em'
+    ].join(';');
+    banner.innerHTML = [
+      '<span>⚠ <strong>Cloud storage not configured</strong> — files you upload are visible only to you.',
+      'Add your Supabase keys to this HTML file so uploads are visible to everyone.</span>',
+      '<a href="https://supabase.com" target="_blank"',
+      '  style="background:rgba(255,255,255,.2);padding:6px 14px;color:#fff;',
+      '         text-decoration:none;white-space:nowrap;">Get free Supabase →</a>'
+    ].join('');
+    document.body.prepend(banner);
+  }
+  loadAllFilesFromCloud();
+  restoreCS3Link();
+});
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SUPABASE HELPERS
+═══════════════════════════════════════════════════════════════════════ */
+function sbHeaders() {
+  return { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' };
+}
+
+/* Upload a file to Storage → return public URL */
+function sbUploadFile(file, cat, onDone, onErr) {
+  var path = cat + '/' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  var uploadUrl = SB_URL + '/storage/v1/object/' + SB_BUCKET + '/' + path;
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', uploadUrl, true);
+  xhr.setRequestHeader('apikey', SB_KEY);
+  xhr.setRequestHeader('Authorization', 'Bearer ' + SB_KEY);
+  xhr.onload = function() {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      var publicUrl = SB_URL + '/storage/v1/object/public/' + SB_BUCKET + '/' + path;
+      onDone(publicUrl);
+    } else {
+      onErr('Upload failed: ' + xhr.status + ' ' + xhr.responseText);
+    }
   };
-  req.onsuccess = function(e) { _db = e.target.result; cb(_db); };
-  req.onerror   = function()  { cb(null); };
+  xhr.onerror = function() { onErr('Network error during upload'); };
+  xhr.send(file);
 }
 
-function idbPut(key, val, cb) {
-  idbOpen(function(db) {
-    if (!db) { if (cb) cb(false); return; }
-    var tx = db.transaction(IDB_STORE, 'readwrite');
-    tx.objectStore(IDB_STORE).put(val, key);
-    tx.oncomplete = function() { if (cb) cb(true);  };
-    tx.onerror    = function() { if (cb) cb(false); };
-  });
+/* Save metadata row → portfolio_links table */
+function sbSaveMeta(cat, name, type, url, onDone) {
+  var endpoint = SB_URL + '/rest/v1/' + SB_TABLE;
+  var body = JSON.stringify({ cat: cat, name: name, type: type, url: url });
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', endpoint, true);
+  xhr.setRequestHeader('apikey', SB_KEY);
+  xhr.setRequestHeader('Authorization', 'Bearer ' + SB_KEY);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.setRequestHeader('Prefer', 'return=representation');
+  xhr.onload = function() {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      try { onDone(JSON.parse(xhr.responseText)[0]); } catch(e) { onDone(null); }
+    } else {
+      console.warn('Meta save failed:', xhr.responseText);
+      onDone(null);
+    }
+  };
+  xhr.onerror = function() { onDone(null); };
+  xhr.send(body);
 }
 
-function idbGet(key, cb) {
-  idbOpen(function(db) {
-    if (!db) { cb(null); return; }
-    var tx  = db.transaction(IDB_STORE, 'readonly');
-    var req = tx.objectStore(IDB_STORE).get(key);
-    req.onsuccess = function() { cb(req.result !== undefined ? req.result : null); };
-    req.onerror   = function() { cb(null); };
-  });
+/* Delete a row by id */
+function sbDeleteMeta(id, onDone) {
+  var endpoint = SB_URL + '/rest/v1/' + SB_TABLE + '?id=eq.' + id;
+  var xhr = new XMLHttpRequest();
+  xhr.open('DELETE', endpoint, true);
+  xhr.setRequestHeader('apikey', SB_KEY);
+  xhr.setRequestHeader('Authorization', 'Bearer ' + SB_KEY);
+  xhr.onload = function() { if (onDone) onDone(); };
+  xhr.onerror = function() { if (onDone) onDone(); };
+  xhr.send();
 }
 
-function idbDel(key, cb) {
-  idbOpen(function(db) {
-    if (!db) { if (cb) cb(); return; }
-    var tx = db.transaction(IDB_STORE, 'readwrite');
-    tx.objectStore(IDB_STORE).delete(key);
-    tx.oncomplete = function() { if (cb) cb(); };
-    tx.onerror    = function() { if (cb) cb(); };
-  });
+/* Fetch all rows */
+function sbFetchAll(onDone) {
+  var endpoint = SB_URL + '/rest/v1/' + SB_TABLE + '?select=*&order=id.asc';
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', endpoint, true);
+  xhr.setRequestHeader('apikey', SB_KEY);
+  xhr.setRequestHeader('Authorization', 'Bearer ' + SB_KEY);
+  xhr.onload = function() {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      try { onDone(JSON.parse(xhr.responseText)); } catch(e) { onDone([]); }
+    } else { onDone([]); }
+  };
+  xhr.onerror = function() { onDone([]); };
+  xhr.send();
 }
 
-function idbAllKeys(cb) {
-  idbOpen(function(db) {
-    if (!db) { cb([]); return; }
-    var tx  = db.transaction(IDB_STORE, 'readonly');
-    var req = tx.objectStore(IDB_STORE).getAllKeys();
-    req.onsuccess = function() { cb(req.result || []); };
-    req.onerror   = function() { cb([]); };
-  });
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   TOAST  —  small non-blocking "Auto-saved" notification
-═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════════════════════════ */
 function showToast(msg, color) {
   var t = document.getElementById('yk-toast');
   if (!t) {
@@ -1962,216 +2023,155 @@ function showToast(msg, color) {
     document.body.appendChild(t);
   }
   t.textContent = msg;
-  t.style.background  = color || '#22c55e';
-  t.style.color       = '#fff';
-  t.style.opacity     = '1';
-  t.style.transform   = 'translateY(0)';
+  t.style.background = color || '#22c55e';
+  t.style.color = '#fff';
+  t.style.opacity = '1';
+  t.style.transform = 'translateY(0)';
   clearTimeout(t._tid);
   t._tid = setTimeout(function() {
     t.style.opacity   = '0';
     t.style.transform = 'translateY(10px)';
-  }, 2200);
+  }, 2500);
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   RENDER  —  build the file card and append to the right grid
-═══════════════════════════════════════════════════════════════ */
-function renderCard(cat, name, type, blobUrl, dbKey) {
+/* ═══════════════════════════════════════════════════════════════════════
+   RENDER CARD  —  builds the file thumbnail / doc row in the grid
+═══════════════════════════════════════════════════════════════════════ */
+function renderCard(cat, name, type, fileUrl, rowId) {
   var grid = document.getElementById('fg-' + cat);
   if (!grid) return;
-
+  type = type || '';
   var isVid = type.startsWith('video/');
-  var isImg = type.startsWith('image/');
-  var isPDF = type === 'application/pdf' || name.toLowerCase().endsWith('.pdf');
-  var isDoc = name.toLowerCase().endsWith('.doc') || name.toLowerCase().endsWith('.docx');
+  var isImg = type.startsWith('image/') || /\.(jpe?g|png|gif|webp|svg|bmp)$/i.test(name);
+  var isPDF = type === 'application/pdf'  || /\.pdf$/i.test(name);
+  var isDoc = /\.(docx?)$/i.test(name);
 
   if (isImg || isVid) {
-    /* ── thumbnail card ── */
-    var th  = document.createElement('div');
-    th.className     = 'fthumb';
-    th.dataset.dbkey = dbKey || '';
-    th.style.cssText = 'cursor:pointer;';
+    var th = document.createElement('div');
+    th.className = 'fthumb';
+    th.dataset.rowid = rowId || '';
 
     var med = document.createElement(isVid ? 'video' : 'img');
-    med.src = blobUrl;
+    med.src = fileUrl;
     if (isVid) { med.muted = true; med.preload = 'metadata'; }
     th.appendChild(med);
 
     var nm = document.createElement('div');
-    nm.className   = 'ftnm';
-    nm.textContent = name;
+    nm.className = 'ftnm'; nm.textContent = name;
     th.appendChild(nm);
 
-    /* hover overlay: Preview + Remove */
-    var ov   = document.createElement('div');
-    ov.className = 'ftov';
+    var ov = document.createElement('div'); ov.className = 'ftov';
 
     var prev = document.createElement('button');
-    prev.className   = 'ftrm';
-    prev.textContent = 'Preview';
+    prev.className = 'ftrm'; prev.textContent = 'Preview';
     prev.style.cssText = 'background:var(--bg2);margin-right:6px;';
     prev.addEventListener('click', function(ev) {
-      ev.stopPropagation();
-      openLB(blobUrl, isVid, name);
+      ev.stopPropagation(); openLB(fileUrl, isVid, name);
     });
 
     var rm = document.createElement('button');
-    rm.className   = 'ftrm';
-    rm.textContent = 'Remove';
-    rm.style.cssText = 'background:var(--ac);';
+    rm.className = 'ftrm'; rm.textContent = 'Remove';
+    rm.style.background = 'var(--ac)';
     rm.addEventListener('click', function(ev) {
       ev.stopPropagation();
-      if (dbKey) idbDel(dbKey, null);
+      if (rowId && SB_READY) sbDeleteMeta(rowId, null);
       th.remove();
       showToast('File removed', '#d0021b');
     });
 
-    ov.appendChild(prev);
-    ov.appendChild(rm);
-    th.appendChild(ov);
-
-    th.addEventListener('click', function() { openLB(blobUrl, isVid, name); });
+    ov.appendChild(prev); ov.appendChild(rm); th.appendChild(ov);
+    th.addEventListener('click', function() { openLB(fileUrl, isVid, name); });
     grid.appendChild(th);
 
   } else if (isPDF || isDoc) {
-    /* ── document row ── */
-    var row  = document.createElement('div');
-    row.className     = 'fdoc';
-    row.dataset.dbkey = dbKey || '';
-
-    var ic  = document.createElement('div');
-    ic.className   = 'fdico';
+    var row = document.createElement('div');
+    row.className = 'fdoc'; row.dataset.rowid = rowId || '';
+    var ic  = document.createElement('div'); ic.className = 'fdico';
     ic.textContent = isPDF ? '📄' : '📝';
-
-    var fnm = document.createElement('div');
-    fnm.className   = 'fdnm';
+    var fnm = document.createElement('div'); fnm.className = 'fdnm';
     fnm.textContent = name;
-
-    /* Preview button (open in new tab) */
     var fprev = document.createElement('button');
-    fprev.className   = 'fdrm';
-    fprev.title       = 'Preview';
-    fprev.textContent = '👁';
+    fprev.className = 'fdrm'; fprev.title = 'Preview'; fprev.textContent = '👁';
     fprev.style.fontSize = '15px';
     fprev.addEventListener('click', function(ev) {
-      ev.stopPropagation();
-      window.open(blobUrl, '_blank');
+      ev.stopPropagation(); window.open(fileUrl, '_blank');
     });
-
     var frm = document.createElement('button');
-    frm.className   = 'fdrm';
-    frm.textContent = '✕';
-    frm.title       = 'Remove';
+    frm.className = 'fdrm'; frm.textContent = '✕'; frm.title = 'Remove';
     frm.addEventListener('click', function(ev) {
       ev.stopPropagation();
-      if (dbKey) idbDel(dbKey, null);
+      if (rowId && SB_READY) sbDeleteMeta(rowId, null);
       row.remove();
       showToast('File removed', '#d0021b');
     });
-
-    row.appendChild(ic);
-    row.appendChild(fnm);
-    row.appendChild(fprev);
-    row.appendChild(frm);
+    row.appendChild(ic); row.appendChild(fnm);
+    row.appendChild(fprev); row.appendChild(frm);
     row.style.cursor = 'pointer';
     row.addEventListener('click', function(ev) {
-      if (ev.target !== frm && ev.target !== fprev) window.open(blobUrl, '_blank');
+      if (ev.target !== frm && ev.target !== fprev) window.open(fileUrl, '_blank');
     });
     grid.appendChild(row);
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   SAVE + RENDER  —  called when user picks a file
-═══════════════════════════════════════════════════════════════ */
-function saveAndRender(file, cat) {
+/* ═══════════════════════════════════════════════════════════════════════
+   UPLOAD  —  called when user picks a file
+   If Supabase is configured: upload to cloud, save meta, render from URL.
+   If not configured: render from local object URL (session only, warns user).
+═══════════════════════════════════════════════════════════════════════ */
+function uploadAndRender(file, cat) {
   var isVid = file.type.startsWith('video/');
   var isImg = file.type.startsWith('image/');
-  var isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-  var isDoc = file.name.toLowerCase().endsWith('.doc') || file.name.toLowerCase().endsWith('.docx');
+  var isPDF = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+  var isDoc = /\.(docx?)$/i.test(file.name);
   if (!isVid && !isImg && !isPDF && !isDoc) return;
 
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var record = {
-      cat:  cat,
-      name: file.name,
-      type: file.type || 'application/octet-stream',
-      buf:  e.target.result    /* ArrayBuffer — survives restarts */
-    };
-    var dbKey = cat + '::' + Date.now() + '::' + file.name;
-    idbPut(dbKey, record, function(ok) {
-      if (ok) showToast('✓ Auto-saved: ' + file.name);
-      else    showToast('Saved in session only (storage full?)', '#e67e22');
-    });
-    var blob    = new Blob([e.target.result], { type: record.type });
-    var blobUrl = URL.createObjectURL(blob);
-    renderCard(cat, file.name, record.type, blobUrl, dbKey);
-  };
-  reader.readAsArrayBuffer(file);
-}
+  if (!SB_READY) {
+    /* Fallback: local preview only */
+    var localUrl = URL.createObjectURL(file);
+    renderCard(cat, file.name, file.type, localUrl, null);
+    showToast('⚠ Session only — configure Supabase to save permanently', '#e67e22');
+    return;
+  }
 
-/* ═══════════════════════════════════════════════════════════════
-   RESTORE  —  on page load, rebuild all cards from IndexedDB
-═══════════════════════════════════════════════════════════════ */
-function restoreAllFiles() {
-  idbAllKeys(function(keys) {
-    var fileKeys = keys.filter(function(k) { return k.indexOf('::') !== -1; });
-    if (!fileKeys.length) return;
-    fileKeys.forEach(function(key) {
-      idbGet(key, function(record) {
-        if (!record || !record.buf) return;
-        var blob    = new Blob([record.buf], { type: record.type });
-        var blobUrl = URL.createObjectURL(blob);
-        renderCard(record.cat, record.name, record.type, blobUrl, key);
-      });
+  showToast('Uploading…', '#2979FF');
+  sbUploadFile(file, cat, function(publicUrl) {
+    sbSaveMeta(cat, file.name, file.type, publicUrl, function(row) {
+      var rowId = row ? row.id : null;
+      renderCard(cat, file.name, file.type, publicUrl, rowId);
+      showToast('✓ Saved to cloud: ' + file.name);
     });
+  }, function(err) {
+    console.error(err);
+    showToast('Upload failed — check Supabase config', '#d0021b');
   });
 }
 
 /* ── public entry points ── */
 function handleF(inp, cat) {
   if (!inp.files || !inp.files.length) return;
-  Array.from(inp.files).forEach(function(f) { saveAndRender(f, cat); });
+  Array.from(inp.files).forEach(function(f) { uploadAndRender(f, cat); });
 }
-
 function processFiles(files, cat) {
   if (!files || !files.length) return;
-  Array.from(files).forEach(function(f) { saveAndRender(f, cat); });
+  Array.from(files).forEach(function(f) { uploadAndRender(f, cat); });
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   LIGHTBOX  —  fullscreen preview with filename caption
-═══════════════════════════════════════════════════════════════ */
-function openLB(src, isVid, filename) {
-  var lb = document.getElementById('lb');
-  var ct = document.getElementById('lbc');
-  ct.innerHTML = '';
-  var el = document.createElement(isVid ? 'video' : 'img');
-  el.src = src;
-  if (isVid) { el.controls = true; el.autoplay = true; }
-  el.style.cssText = 'max-width:100%;max-height:82vh;object-fit:contain;display:block;border:1px solid var(--bo);';
-  ct.appendChild(el);
-  if (filename) {
-    var cap = document.createElement('div');
-    cap.textContent = filename;
-    cap.style.cssText = 'margin-top:12px;font-size:12px;color:rgba(255,255,255,.45);text-align:center;letter-spacing:.04em;';
-    ct.appendChild(cap);
-  }
-  lb.classList.add('on');
+/* ═══════════════════════════════════════════════════════════════════════
+   LOAD ALL FILES FROM CLOUD  —  runs on every page load for every visitor
+═══════════════════════════════════════════════════════════════════════ */
+function loadAllFilesFromCloud() {
+  if (!SB_READY) return;
+  sbFetchAll(function(rows) {
+    rows.forEach(function(row) {
+      renderCard(row.cat, row.name, row.type, row.url, row.id);
+    });
+  });
 }
-function closeLB() {
-  document.getElementById('lb').classList.remove('on');
-  document.getElementById('lbc').innerHTML = '';
-}
-document.getElementById('lb').addEventListener('click', function(e) {
-  if (e.target === document.getElementById('lb')) closeLB();
-});
-document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeLB(); });
 
-/* ═══════════════════════════════════════════════════════════════
-   CS3 LINK PANEL
-═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════
+   CS3 LINK  —  saved to Supabase table row (cat='cs3_link') + localStorage
+═══════════════════════════════════════════════════════════════════════ */
 function cs3ShowSavedState(url) {
   var inputRow  = document.getElementById('cs3-input-row');
   var gotoRow   = document.getElementById('cs3-goto-row');
@@ -2201,11 +2201,13 @@ function cs3SaveLink() {
     if (status) { status.textContent = 'Please paste a URL first.'; status.style.color = 'var(--ac)'; }
     return;
   }
-  if (url.indexOf('http://') !== 0 && url.indexOf('https://') !== 0) {
-    url = 'https://' + url;
-  }
+  if (url.indexOf('http://') !== 0 && url.indexOf('https://') !== 0) url = 'https://' + url;
   inp.value = url;
   try { localStorage.setItem('cs3_output_link', url); } catch(e) {}
+  /* Also save to Supabase so every visitor sees the same link */
+  if (SB_READY) {
+    sbSaveMeta('cs3_link', 'cs3_output_link', 'text/plain', url, null);
+  }
   cs3ShowSavedState(url);
 }
 function cs3ClearLink() {
@@ -2214,31 +2216,76 @@ function cs3ClearLink() {
   try { localStorage.removeItem('cs3_output_link'); } catch(e) {}
   cs3ShowInputState();
 }
+function restoreCS3Link() {
+  /* Try cloud first, fall back to localStorage */
+  if (SB_READY) {
+    var endpoint = SB_URL + '/rest/v1/' + SB_TABLE + '?cat=eq.cs3_link&order=id.desc&limit=1';
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', endpoint, true);
+    xhr.setRequestHeader('apikey', SB_KEY);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + SB_KEY);
+    xhr.onload = function() {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          var rows = JSON.parse(xhr.responseText);
+          if (rows.length && rows[0].url) { cs3ShowSavedState(rows[0].url); return; }
+        } catch(e) {}
+      }
+      /* Cloud had nothing — check localStorage */
+      try { var ls = localStorage.getItem('cs3_output_link'); if (ls) cs3ShowSavedState(ls); } catch(e) {}
+    };
+    xhr.onerror = function() {
+      try { var ls = localStorage.getItem('cs3_output_link'); if (ls) cs3ShowSavedState(ls); } catch(e) {}
+    };
+    xhr.send();
+  } else {
+    try { var ls = localStorage.getItem('cs3_output_link'); if (ls) cs3ShowSavedState(ls); } catch(e) {}
+  }
+}
 
-/* ═══════════════════════════════════════════════════════════════
-   PAGE LOAD
-═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════
+   LIGHTBOX
+═══════════════════════════════════════════════════════════════════════ */
+function openLB(src, isVid, filename) {
+  var lb = document.getElementById('lb');
+  var ct = document.getElementById('lbc');
+  ct.innerHTML = '';
+  var el = document.createElement(isVid ? 'video' : 'img');
+  el.src = src;
+  if (isVid) { el.controls = true; el.autoplay = true; }
+  el.style.cssText = 'max-width:100%;max-height:82vh;object-fit:contain;display:block;border:1px solid var(--bo);';
+  ct.appendChild(el);
+  if (filename) {
+    var cap = document.createElement('div');
+    cap.textContent = filename;
+    cap.style.cssText = 'margin-top:12px;font-size:12px;color:rgba(255,255,255,.45);text-align:center;letter-spacing:.04em;';
+    ct.appendChild(cap);
+  }
+  lb.classList.add('on');
+}
+function closeLB() {
+  document.getElementById('lb').classList.remove('on');
+  document.getElementById('lbc').innerHTML = '';
+}
+document.getElementById('lb').addEventListener('click', function(e) {
+  if (e.target === document.getElementById('lb')) closeLB();
+});
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeLB(); });
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SKILL BARS
+═══════════════════════════════════════════════════════════════════════ */
 window.addEventListener('load', function() {
-  /* Skill bars */
   setTimeout(function() {
     document.querySelectorAll('.sbf').forEach(function(f, i) {
       setTimeout(function() { f.style.width = f.dataset.w + '%'; }, 300 + i * 80);
     });
   }, 400);
-
-  /* Restore CS3 link */
-  try {
-    var cs3saved = localStorage.getItem('cs3_output_link');
-    if (cs3saved) cs3ShowSavedState(cs3saved);
-  } catch(e) {}
-
-  /* Restore all uploaded files from IndexedDB */
-  restoreAllFiles();
 });
 
-/* ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════════
    NAV DOTS
-═══════════════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════════════════ */
 var SECS = ['hero','about','skills','knowledge','experience','work','casestudies','cs-upload','creatives','content','video','websites','perf','contact'];
 var dots = document.querySelectorAll('.dot');
 dots.forEach(function(d) {
@@ -2258,9 +2305,9 @@ var dio = new IntersectionObserver(function(entries) {
 }, { threshold: 0.35 });
 SECS.forEach(function(id) { var el = document.getElementById(id); if (el) dio.observe(el); });
 
-/* ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════════
    DRAG & DROP  (static zones)
-═══════════════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════════════════ */
 document.querySelectorAll('.uzone').forEach(function(z) {
   z.addEventListener('dragover', function(e) {
     e.preventDefault();
