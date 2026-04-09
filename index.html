@@ -353,7 +353,7 @@ footer{padding:28px 192px;border-top:1px solid var(--bo);display:flex;align-item
       <p>Bengaluru-based Digital Marketing &amp; Graphic Design professional with a proven track record in social media management, ORM, content creation, paid social, and data-driven brand strategy across diverse industries &mdash; from edtech in India to multi-brand campaigns in Dubai.</p>
       <div class="acmeta">
         <div class="amr"><span class="ic">&#128222;</span>(+91) 9791526872</div>
-        <div class="amr"><span class="ic">&#9993;</span><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="efae969d8e968e8baf88828e8683c18c8082">[email&#160;protected]</a></div>
+        <div class="amr"><span class="ic">&#9993;</span>Ayrayad@gmail.com</div>
         <div class="amr"><span class="ic">&#127760;</span><a href="https://bit.ly/4lqBR4a" target="_blank">yadhavkrishna.com/portfolio</a></div>
         <div class="amr"><span class="ic">&#128279;</span><a href="https://www.linkedin.com/in/yadhav-krishna-474a5b248/" target="_blank">linkedin.com/in/yadhavkrishna</a></div>
         <div class="amr"><span class="ic">&#128205;</span>Bengaluru, India</div>
@@ -1199,9 +1199,6 @@ footer{padding:28px 192px;border-top:1px solid var(--bo);display:flex;align-item
     <div id="cs3-link-status" style="margin-top:10px;font-size:11.5px;min-height:18px;letter-spacing:.02em;"></div>
   </div>
 
-  </div>
-
-
   <div class="rule"></div>
   <div class="lbl">Case Study &middot; 04</div>
   <h2 class="h2">ToothBootZ &mdash;<br>Anniversary <span class="r">Poster</span></h2>
@@ -1861,11 +1858,11 @@ footer{padding:28px 192px;border-top:1px solid var(--bo);display:flex;align-item
   <p class="bt">Open to freelance projects, full-time roles, and creative collaborations in digital marketing, social media management, graphic design, and brand strategy.</p>
   <div class="ctg">
     <div class="ctb">
-      <div><div class="ctlbl">Email</div><a href="/cdn-cgi/l/email-protection#6829111a0911090c280f05090104460b0705" class="ctv"><span class="__cf_email__" data-cfemail="0849717a6971696c486f65696164266b6765">[email&#160;protected]</span></a></div>
+      <div><div class="ctlbl">Email</div><a href="mailto:Ayrayad@gmail.com" class="ctv">Ayrayad@gmail.com</a></div>
       <div><div class="ctlbl">Phone</div><a href="tel:+919791526872" class="ctv">(+91) 9791526872</a></div>
       <div><div class="ctlbl">Location</div><span class="ctv" style="cursor:default;">Bengaluru, Karnataka, India</span></div>
       <div><div class="ctlbl">Languages</div><span class="ctv" style="cursor:default;font-size:14px;">English &middot; Hindi &middot; Tamil &middot; Malayalam &middot; Kannada</span></div>
-      <a href="/cdn-cgi/l/email-protection#e4a59d96859d8580a48389858d88ca878b89" class="btn" style="margin-top:8px;">Send Message</a>
+      <a href="mailto:Ayrayad@gmail.com" class="btn" style="margin-top:8px;">Send Message</a>
     </div>
     <div>
       <div class="lbl" style="margin-bottom:6px;">Portfolio &amp; Social</div>
@@ -1885,45 +1882,15 @@ footer{padding:28px 192px;border-top:1px solid var(--bo);display:flex;align-item
 </footer>
 
 <script>
-/* ═══════════════════════════════════════════════════════════════════════
-   SUPABASE CONFIG
-   
-   SETUP (one-time, 3 minutes):
-   1. Go to https://supabase.com  →  New project (free)
-   2. In your project → Storage → Create bucket called: portfolio-files
-      Set it to PUBLIC
-   3. In Table Editor → New table called: portfolio_links
-      Columns: id (int8, primary key), cat (text), name (text), url (text)
-      Set Row Level Security OFF (or allow all for anon)
-   4. Go to Settings → API → copy "URL" and "anon public" key below
-   5. Re-upload this HTML file to Netlify
-═══════════════════════════════════════════════════════════════════════ */
-var SB_URL    = 'https://bbaldktkbstsyhytyywa.supabase.co';       
-var SB_KEY    = 'sb_publishable_USV9UlbOhIahSDVnRYb_gA_8AxoEnMr';  // starts with eyJ...
+/* ═══ SUPABASE CONFIG ═══ */
+var SB_URL    = 'https://bbaldktkbstsyhytyywa.supabase.co';       // e.g. https://xxxx.supabase.co
+var SB_KEY    = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiYWxka3RrYnN0c3loeXR5eXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NjEwMjcsImV4cCI6MjA5MTIzNzAyN30.Q5m7I3q-zaLHTbG_VjY-VozF4vcLKqLhRjnb58uD2qI';  // starts with eyJ...
 var SB_BUCKET = 'portfolio-files';
 var SB_TABLE  = 'portfolio_links';
-var SB_READY  = SB_URL !== 'YOUR_SUPABASE_URL' && SB_KEY !== 'YOUR_SUPABASE_ANON_KEY';
+var SB_READY  = true; /* keys configured */
 
 /* ── Setup banner ─────────────────────────────────────────────────────── */
 window.addEventListener('DOMContentLoaded', function() {
-  if (!SB_READY) {
-    var banner = document.createElement('div');
-    banner.id = 'sb-setup-banner';
-    banner.style.cssText = [
-      'position:fixed;top:58px;left:0;right:0;z-index:500',
-      'background:#d0021b;color:#fff;padding:12px 24px',
-      'display:flex;align-items:center;justify-content:space-between;gap:16px',
-      'font-family:var(--B);font-size:12px;letter-spacing:.04em'
-    ].join(';');
-    banner.innerHTML = [
-      '<span>⚠ <strong>Cloud storage not configured</strong> — files you upload are visible only to you.',
-      'Add your Supabase keys to this HTML file so uploads are visible to everyone.</span>',
-      '<a href="https://supabase.com" target="_blank"',
-      '  style="background:rgba(255,255,255,.2);padding:6px 14px;color:#fff;',
-      '         text-decoration:none;white-space:nowrap;">Get free Supabase →</a>'
-    ].join('');
-    document.body.prepend(banner);
-  }
   loadAllFilesFromCloud();
   restoreCS3Link();
 });
@@ -1931,9 +1898,6 @@ window.addEventListener('DOMContentLoaded', function() {
 /* ═══════════════════════════════════════════════════════════════════════
    SUPABASE HELPERS
 ═══════════════════════════════════════════════════════════════════════ */
-function sbHeaders() {
-  return { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' };
-}
 
 /* Upload a file to Storage → return public URL */
 function sbUploadFile(file, cat, onDone, onErr) {
@@ -1943,6 +1907,8 @@ function sbUploadFile(file, cat, onDone, onErr) {
   xhr.open('POST', uploadUrl, true);
   xhr.setRequestHeader('apikey', SB_KEY);
   xhr.setRequestHeader('Authorization', 'Bearer ' + SB_KEY);
+  xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+  xhr.setRequestHeader('x-upsert', 'true');
   xhr.onload = function() {
     if (xhr.status >= 200 && xhr.status < 300) {
       var publicUrl = SB_URL + '/storage/v1/object/public/' + SB_BUCKET + '/' + path;
@@ -1955,26 +1921,42 @@ function sbUploadFile(file, cat, onDone, onErr) {
   xhr.send(file);
 }
 
-/* Save metadata row → portfolio_links table */
+/* Save metadata row → portfolio_links table
+   Tries with 'type' column first; if that column doesn't exist in your table,
+   automatically retries without it so uploads still work. */
 function sbSaveMeta(cat, name, type, url, onDone) {
   var endpoint = SB_URL + '/rest/v1/' + SB_TABLE;
-  var body = JSON.stringify({ cat: cat, name: name, type: type, url: url });
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', endpoint, true);
-  xhr.setRequestHeader('apikey', SB_KEY);
-  xhr.setRequestHeader('Authorization', 'Bearer ' + SB_KEY);
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.setRequestHeader('Prefer', 'return=representation');
-  xhr.onload = function() {
-    if (xhr.status >= 200 && xhr.status < 300) {
-      try { onDone(JSON.parse(xhr.responseText)[0]); } catch(e) { onDone(null); }
+  function doPost(payload, cb) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', endpoint, true);
+    xhr.setRequestHeader('apikey', SB_KEY);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + SB_KEY);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('Prefer', 'return=representation');
+    xhr.onload = function() {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try { cb(null, JSON.parse(xhr.responseText)[0]); } catch(e) { cb(null, null); }
+      } else {
+        cb(xhr.responseText, null);
+      }
+    };
+    xhr.onerror = function() { cb('network error', null); };
+    xhr.send(JSON.stringify(payload));
+  }
+  /* First attempt: with type column */
+  doPost({ cat: cat, name: name, type: type, url: url }, function(err, row) {
+    if (!err) { if (onDone) onDone(row); return; }
+    /* If it failed because 'type' column doesn't exist, retry without it */
+    if (err && err.indexOf('"type"') !== -1) {
+      doPost({ cat: cat, name: name, url: url }, function(err2, row2) {
+        if (err2) console.warn('Meta save failed:', err2);
+        if (onDone) onDone(row2);
+      });
     } else {
-      console.warn('Meta save failed:', xhr.responseText);
-      onDone(null);
+      console.warn('Meta save failed:', err);
+      if (onDone) onDone(null);
     }
-  };
-  xhr.onerror = function() { onDone(null); };
-  xhr.send(body);
+  });
 }
 
 /* Delete a row by id */
@@ -2164,7 +2146,8 @@ function loadAllFilesFromCloud() {
   if (!SB_READY) return;
   sbFetchAll(function(rows) {
     rows.forEach(function(row) {
-      renderCard(row.cat, row.name, row.type, row.url, row.id);
+      if (row.cat === 'cs3_link') return; /* link rows — not file cards */
+      renderCard(row.cat, row.name, row.type || '', row.url, row.id);
     });
   });
 }
