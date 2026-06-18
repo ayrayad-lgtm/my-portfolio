@@ -79,6 +79,25 @@ section{padding:96px 192px;position:relative;overflow:hidden;}
 .hscr{position:absolute;bottom:32px;right:52px;display:flex;align-items:center;gap:12px;color:var(--mu);font-size:10px;letter-spacing:.1em;text-transform:uppercase;}
 .hsl{width:32px;height:1px;background:var(--mu2);}
 
+
+/* WORK SPOTLIGHT */
+.work-rail{position:fixed;left:24px;bottom:24px;z-index:350;display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(208,2,27,.92);border:1px solid rgba(255,255,255,.16);box-shadow:0 18px 48px rgba(208,2,27,.28);backdrop-filter:blur(18px);text-decoration:none;color:var(--w);text-transform:uppercase;letter-spacing:.08em;font-size:10px;font-weight:700;transition:transform .25s,box-shadow .25s;}
+.work-rail:hover{transform:translateY(-3px);box-shadow:0 22px 58px rgba(208,2,27,.42);}
+.work-rail span:first-child{width:30px;height:30px;border-radius:50%;background:var(--w);color:var(--ac);display:grid;place-items:center;font-size:16px;}
+.work-rail small{display:block;color:rgba(255,255,255,.72);font-size:8px;letter-spacing:.12em;margin-top:1px;}
+.work-jump{margin-top:18px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-width:680px;}
+.jump-card{position:relative;overflow:hidden;min-height:104px;padding:18px;border:1px solid var(--bo);background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.015));color:var(--w);text-decoration:none;transition:transform .25s,border-color .25s,background .25s;}
+.jump-card::after{content:'';position:absolute;inset:auto -20% -70% -20%;height:90px;background:radial-gradient(circle,rgba(208,2,27,.5),transparent 68%);transition:bottom .25s;}
+.jump-card:hover{transform:translateY(-5px);border-color:rgba(208,2,27,.75);background:linear-gradient(145deg,rgba(208,2,27,.2),rgba(255,255,255,.025));}
+.jump-card:hover::after{bottom:-48%;}
+.jicon{font-size:23px;margin-bottom:12px;display:block;}
+.jtitle{display:block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;line-height:1.25;}
+.jmeta{display:block;margin-top:7px;font-size:10px;color:var(--mu);}
+.work-head{display:flex;justify-content:space-between;gap:32px;align-items:end;margin-bottom:34px;}
+.work-head .h2{margin-bottom:0;}
+.work-prompt{max-width:360px;border-left:2px solid var(--ac);padding-left:18px;color:rgba(255,255,255,.62);font-size:13px;line-height:1.7;}
+@media(max-width:900px){.work-rail{left:14px;right:14px;bottom:14px;justify-content:center}.work-jump{grid-template-columns:1fr 1fr}.work-head{display:block}.work-prompt{margin-top:18px}.hscr{display:none}}
+
 /* ABOUT */
 #about{background:var(--bg);}
 .agrid{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:start;}
@@ -293,6 +312,11 @@ footer{padding:28px 192px;border-top:1px solid var(--bo);display:flex;align-item
   </nav>
 </header>
 
+
+<a class="work-rail" href="#work" aria-label="Jump directly to portfolio work">
+  <span>↗</span><span>See my work<small>Portfolio shortcut</small></span>
+</a>
+
 <div id="nd">
   <div class="dot on" data-t="hero"></div>
   <div class="dot" data-t="about"></div>
@@ -326,7 +350,13 @@ footer{padding:28px 192px;border-top:1px solid var(--bo);display:flex;align-item
         <div><div class="kv">300%</div><div class="kl">Avg ROI</div></div>
         <div><div class="kv">20+</div><div class="kl">Brands &middot; 4 Countries</div></div>
       </div>
-      <div class="hctas"><a href="#work" class="btn">View Work</a><a href="#contact" class="bg2">Let's talk</a></div>
+      <div class="hctas"><a href="#work" class="btn">View Work</a><a href="#creatives" class="bg2">Open creatives</a><a href="#contact" class="bg2">Let's talk</a></div>
+      <div class="work-jump" aria-label="Quick portfolio links">
+        <a class="jump-card" href="#work"><span class="jicon">✦</span><span class="jtitle">Case Wins</span><span class="jmeta">ROI, growth, SEO</span></a>
+        <a class="jump-card" href="#creatives"><span class="jicon">▣</span><span class="jtitle">Creatives</span><span class="jmeta">Posters & designs</span></a>
+        <a class="jump-card" href="#video"><span class="jicon">▶</span><span class="jtitle">Videos</span><span class="jmeta">Reels & edits</span></a>
+        <a class="jump-card" href="#websites"><span class="jicon">⌁</span><span class="jtitle">Websites</span><span class="jmeta">Live builds</span></a>
+      </div>
     </div>
     <div class="hr">
       <div class="hpanel">
@@ -503,7 +533,10 @@ footer{padding:28px 192px;border-top:1px solid var(--bo);display:flex;align-item
 <!-- WORK -->
 <section id="work">
   <div class="lbl">Previous Work</div>
-  <h2 class="h2">Selected projects</h2>
+  <div class="work-head">
+    <h2 class="h2">Selected projects</h2>
+    <p class="work-prompt">Start here: each card is built like a recruiter-friendly proof point with the role, channel mix, and measurable outcome visible before the reader scrolls further.</p>
+  </div>
   <div class="wgrid">
     <div class="wcard"><div class="wltr">BZ</div><div class="wnum">Work &middot; 01</div><div class="wtitle">Bhanzu Social Media</div><div class="wmeta"><span class="wpill">Content &amp; ORM</span><span class="wpill">2025</span><span class="wpill">Full-time</span></div><div class="wdesc">Rebuilt the content strategy of a 120k-follower edtech brand. Zero-miss 25+ posts/week across Instagram, Facebook, and YouTube while enforcing brand safety via Sprinklr.</div><div class="wtags"><span class="wtag">Instagram</span><span class="wtag">Facebook</span><span class="wtag">YouTube</span><span class="wtag">Sprinklr</span></div><div class="orow"><div><div class="ov">&uarr;45%</div><div class="ok">Audience Growth</div></div><div><div class="ov">3.4%</div><div class="ok">Engagement Rate</div></div><div><div class="ov">25+</div><div class="ok">Posts/Week</div></div></div></div>
     <div class="wcard"><div class="wltr">RY</div><div class="wnum">Work &middot; 02</div><div class="wtitle">Rynock Solutions Dubai</div><div class="wmeta"><span class="wpill">Digital Campaigns</span><span class="wpill">2024&ndash;2025</span><span class="wpill">GCC</span></div><div class="wdesc">End-to-end campaigns for 3 client brands across GCC. Managed influencer collabs, WordPress SEO, and Meta Ads &mdash; reducing CPC by 18% and landing 6 first-page SEO rankings.</div><div class="wtags"><span class="wtag">Meta Ads</span><span class="wtag">SEO</span><span class="wtag">Influencer</span><span class="wtag">WordPress</span></div><div class="orow"><div><div class="ov">300%</div><div class="ok">Avg ROI</div></div><div><div class="ov">&minus;18%</div><div class="ok">CPC Reduction</div></div><div><div class="ov">6</div><div class="ok">1st-Page Rankings</div></div></div></div>
